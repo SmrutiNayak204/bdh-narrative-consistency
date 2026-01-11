@@ -1,3 +1,5 @@
+import nltk
+nltk.data.path.append("./nltk_data")
 import joblib
 import torch
 import numpy as np
