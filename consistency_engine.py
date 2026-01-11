@@ -9,7 +9,7 @@ from tokenizer import encode
 from bdh import BDH, BDHConfig
 
 # -----------------------------
-# Lazy global variables
+# Lazy-loaded global objects
 # -----------------------------
 embedder = None
 bdh = None
@@ -17,24 +17,23 @@ canon = None
 canon_embed = None
 kmeans = None
 
-# -----------------------------
-# Load everything only once
-# -----------------------------
+
 def load_models():
     global embedder, bdh, canon, canon_embed, kmeans
 
     if embedder is not None:
         return   # already loaded
 
-    print("🚀 Loading ML models into memory...")
+    print("🔄 Loading models into memory...")
 
+    # ---- SentenceTransformer ----
     embedder = SentenceTransformer(
         "all-MiniLM-L6-v2",
         device="cpu",
         cache_folder="./hf_cache"
     )
 
-    # Load BDH
+    # ---- BDH ----
     config = BDHConfig(
         vocab_size=256,
         n_embd=64,
@@ -47,20 +46,20 @@ def load_models():
     bdh.load_state_dict(torch.load("models/bdh.pt", map_location="cpu"))
     bdh.eval()
 
-    # Load canon
+    # ---- Canon text ----
     with open("data/novels/monte_cristo.txt", encoding="utf-8") as f:
-        canon = f.read()
+        canon = f.read()[:8000]
 
-    canon = canon[:8000]
     canon_embed = embedder.encode(canon, normalize_embeddings=True)
 
-    # Load tokenizer
+    # ---- Tokenizer ----
     kmeans = joblib.load("models/tokenizer.km")
 
-    print("✅ Models loaded")
+    print("✅ Models loaded.")
+
 
 # -----------------------------
-# Safe BDH run
+# Run BDH safely
 # -----------------------------
 def run_bdh(text):
     tokens = encode(text, kmeans)
@@ -75,17 +74,16 @@ def run_bdh(text):
 
     return h.squeeze(0).float()
 
+
 # -----------------------------
 # Feature extractor
 # -----------------------------
 def extract_features(book_name, backstory):
-    load_models()   # 👈 THIS is the magic line
+    load_models()   # 👈 this is the key
 
-    # Semantic similarity
     back_embed = embedder.encode(backstory, normalize_embeddings=True)
     semantic = float(np.dot(canon_embed, back_embed))
 
-    # BDH belief drift
     H_back = run_bdh(backstory)
     H_canon = run_bdh(canon)
 
@@ -93,5 +91,3 @@ def extract_features(book_name, backstory):
     drift_norm = min(drift / 250.0, 1.0)
 
     return semantic, drift_norm
-
-
