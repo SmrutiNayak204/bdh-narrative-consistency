@@ -1,18 +1,26 @@
+import os
 import nltk
-nltk.data.path.append("./nltk_data")
 import joblib
 import torch
 import numpy as np
 from sentence_transformers import SentenceTransformer
 from tokenizer import encode
 from bdh import BDH, BDHConfig
+
+# Ensure NLTK works on Render
+nltk.data.path.append("./nltk_data")
+
 print("Loading models...")
-pip install -r requirements.txt && python -m nltk.downloader punkt -d ./nltk_data
+
 # -----------------------------
-# Load semantic encoder
+# Load semantic encoder (cached locally)
 # -----------------------------
-embedder = SentenceTransformer("all-MiniLM-L6-v2", device="cpu", cache_folder="./hf_cache")
-pip install -r requirements.txt && python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2', cache_folder='./hf_cache')" && python -m nltk.downloader punkt -d ./nltk_data
+embedder = SentenceTransformer(
+    "all-MiniLM-L6-v2",
+    device="cpu",
+    cache_folder="./hf_cache"
+)
+
 # -----------------------------
 # Load BDH
 # -----------------------------
@@ -25,7 +33,7 @@ config = BDHConfig(
 )
 
 bdh = BDH(config)
-bdh.load_state_dict(torch.load("models/bdh.pt"))
+bdh.load_state_dict(torch.load("models/bdh.pt", map_location="cpu"))
 bdh.eval()
 
 # -----------------------------
@@ -34,7 +42,7 @@ bdh.eval()
 with open("data/novels/monte_cristo.txt", encoding="utf-8") as f:
     canon = f.read()
 
-canon = canon[:8000]  # Early Edmond only
+canon = canon[:8000]
 canon_embed = embedder.encode(canon, normalize_embeddings=True)
 
 # -----------------------------
@@ -51,7 +59,7 @@ def run_bdh(text):
     if len(tokens) < 10:
         return torch.zeros(64)
 
-    idx = torch.tensor([tokens[:300]])
+    idx = torch.tensor([tokens[:300]], dtype=torch.long)
 
     with torch.no_grad():
         _, _, h = bdh(idx)
@@ -71,8 +79,7 @@ def extract_features(book_name, backstory):
     H_canon = run_bdh(canon)
 
     drift = torch.norm(H_back - H_canon).item()
-
-    # Normalize drift using expected BDH scale
     drift_norm = min(drift / 250.0, 1.0)
 
-    return [semantic, drift_norm]
+    return semantic, drift_norm
+
