@@ -7,6 +7,7 @@ from sentence_transformers import SentenceTransformer
 from tokenizer import encode
 from bdh import BDH, BDHConfig
 print("Loading models...")
+pip install -r requirements.txt && python -m nltk.downloader punkt -d ./nltk_data
 # -----------------------------
 # Load semantic encoder
 # -----------------------------
