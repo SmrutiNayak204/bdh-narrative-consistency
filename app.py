@@ -18,10 +18,8 @@ async def predict(
     backstory: str = Form(...),
     book_name: str = Form(...)
 ):
-    # Get calibrated BDH features
     semantic, drift = extract_features(book_name, backstory)
 
-    # Proper calibrated score
     score = semantic - (1.2 * drift)
 
     print("semantic =", round(semantic,3),
@@ -42,3 +40,4 @@ async def predict(
             "score": round(score, 3)
         }
     )
+
