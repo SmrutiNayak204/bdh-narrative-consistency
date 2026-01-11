@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+models/*.pt
+models/training_pairs.km
+submission.csv
+.cache/

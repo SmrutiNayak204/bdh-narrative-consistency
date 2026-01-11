@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BDH Narrative Reasoner</title>
+    <style>
+        body {
+            font-family: Arial;
+            background:#0b0b0b;
+            color:white;
+            padding:40px;
+        }
+        textarea {
+            width:100%;
+            height:200px;
+            background:#111;
+            color:white;
+            border:1px solid #444;
+            padding:10px;
+        }
+        select, button {
+            padding:10px;
+            margin-top:10px;
+            background:#222;
+            color:white;
+            border:1px solid #555;
+            cursor:pointer;
+        }
+        button:hover {
+            background:#333;
+        }
+        .box {
+            max-width:900px;
+            margin:auto;
+            background:#161616;
+            padding:30px;
+            border-radius:10px;
+            box-shadow:0 0 30px rgba(0,0,0,0.7);
+        }
+        .result {
+            font-size:26px;
+            margin-top:20px;
+            padding:10px;
+            background:#222;
+            border-radius:5px;
+        }
+        .team {
+            margin-top:40px;
+            font-size:14px;
+            color:#aaa;
+            border-top:1px solid #333;
+            padding-top:20px;
+        }
+        h1 {
+            color:#ffb347;
+        }
+    </style>
+</head>
+
+<body>
+<div class="box">
+    <h1>🐉 Baby Dragon Hatchling</h1>
+
+    <p>
+        <b>BDH Narrative Reasoner</b> is an AI system that checks whether a fictional
+        backstory is <b>causally consistent</b> with a given novel.
+        It simulates the internal beliefs of characters using a biologically-inspired
+        neural architecture and determines whether the new backstory could realistically
+        produce the future story.
+    </p>
+
+    <p>
+        This system goes beyond keyword matching — it performs <b>causal narrative reasoning</b>
+        by replaying the story under different hypothetical pasts.
+    </p>
+
+    <hr style="border:1px solid #333">
+
+    <form action="/predict" method="post">
+        <label><b>Select Novel:</b></label><br>
+        <select name="book_name">
+            <option value="monte_cristo">The Count of Monte Cristo</option>
+            <option value="castaways">In Search of the Castaways</option>
+        </select>
+
+        <br><br>
+
+        <label><b>Enter Backstory:</b></label><br>
+        <textarea name="backstory" placeholder="Enter the hypothetical backstory here...">{{ backstory or "" }}</textarea>
+
+        <br>
+        <button type="submit">Evaluate Narrative</button>
+    </form>
+
+    {% if result %}
+    <div class="result">
+        Verdict: <b>{{ result }}</b>
+    </div>
+    {% endif %}
+
+    <div class="team">
+        <b>Created by Team Sim-Sim</b><br>
+        Team Leader: Rishit Mohanty<br>
+        Members: Smruti Ranjan Nayak, Soham Das, Prasmit Prayansu
+    </div>
+</div>
+</body>
+</html>

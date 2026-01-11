@@ -1,0 +1,12 @@
+torch
+sentence-transformers
+scikit-learn
+numpy
+pandas
+tqdm
+nltk
+joblib
+fastapi
+uvicorn
+python-multipart
+jinja2
