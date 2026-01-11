@@ -8,18 +8,25 @@ from tokenizer import encode
 from bdh import BDH, BDHConfig
 
 # Ensure NLTK works on Render
-nltk.data.path.append("./nltk_data")
-
+nltk.data.path.append("/opt/render/nltk_data")
 print("Loading models...")
 
 # -----------------------------
 # Load semantic encoder (cached locally)
 # -----------------------------
-embedder = SentenceTransformer(
-    "all-MiniLM-L6-v2",
-    device="cpu",
-    cache_folder="./hf_cache"
-)
+_embedder = None
+
+def get_embedder():
+    global _embedder
+    if _embedder is None:
+        print("Loading MiniLM model...")
+        _embedder = SentenceTransformer(
+            "all-MiniLM-L6-v2",
+            device="cpu",
+            cache_folder="./hf_cache"
+        )
+    return _embedder
+
 
 # -----------------------------
 # Load BDH
@@ -43,7 +50,7 @@ with open("data/novels/monte_cristo.txt", encoding="utf-8") as f:
     canon = f.read()
 
 canon = canon[:8000]
-canon_embed = embedder.encode(canon, normalize_embeddings=True)
+canon_embed = get_embedder().encode(canon, normalize_embeddings=True)
 
 # -----------------------------
 # Load tokenizer
@@ -71,7 +78,7 @@ def run_bdh(text):
 # -----------------------------
 def extract_features(book_name, backstory):
     # ---- Semantic similarity ----
-    back_embed = embedder.encode(backstory, normalize_embeddings=True)
+    back_embed = get_embedder().encode(backstory, normalize_embeddings=True)
     semantic = float(np.dot(canon_embed, back_embed))
 
     # ---- BDH belief drift ----
