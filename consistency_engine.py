@@ -6,12 +6,11 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 from tokenizer import encode
 from bdh import BDH, BDHConfig
-
+print("Loading models...")
 # -----------------------------
 # Load semantic encoder
 # -----------------------------
-embedder = SentenceTransformer("all-MiniLM-L6-v2")
-
+embedder = SentenceTransformer("all-MiniLM-L6-v2", device="cpu", cache_folder="./hf_cache")
 # -----------------------------
 # Load BDH
 # -----------------------------
