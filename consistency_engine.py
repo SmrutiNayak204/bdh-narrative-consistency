@@ -1,5 +1,6 @@
-import os
 import nltk
+nltk.data.path.append("./nltk_data")
+
 import joblib
 import torch
 import numpy as np
@@ -7,58 +8,59 @@ from sentence_transformers import SentenceTransformer
 from tokenizer import encode
 from bdh import BDH, BDHConfig
 
-# Ensure NLTK works on Render
-nltk.data.path.append("/opt/render/nltk_data")
-print("Loading models...")
+# -----------------------------
+# Lazy global variables
+# -----------------------------
+embedder = None
+bdh = None
+canon = None
+canon_embed = None
+kmeans = None
 
 # -----------------------------
-# Load semantic encoder (cached locally)
+# Load everything only once
 # -----------------------------
-_embedder = None
+def load_models():
+    global embedder, bdh, canon, canon_embed, kmeans
 
-def get_embedder():
-    global _embedder
-    if _embedder is None:
-        print("Loading MiniLM model...")
-        _embedder = SentenceTransformer(
-            "all-MiniLM-L6-v2",
-            device="cpu",
-            cache_folder="./hf_cache"
-        )
-    return _embedder
+    if embedder is not None:
+        return   # already loaded
 
+    print("🚀 Loading ML models into memory...")
 
-# -----------------------------
-# Load BDH
-# -----------------------------
-config = BDHConfig(
-    vocab_size=256,
-    n_embd=64,
-    n_layer=3,
-    n_head=2,
-    mlp_internal_dim_multiplier=32
-)
+    embedder = SentenceTransformer(
+        "all-MiniLM-L6-v2",
+        device="cpu",
+        cache_folder="./hf_cache"
+    )
 
-bdh = BDH(config)
-bdh.load_state_dict(torch.load("models/bdh.pt", map_location="cpu"))
-bdh.eval()
+    # Load BDH
+    config = BDHConfig(
+        vocab_size=256,
+        n_embd=64,
+        n_layer=3,
+        n_head=2,
+        mlp_internal_dim_multiplier=32
+    )
 
-# -----------------------------
-# Load canon (early Edmond)
-# -----------------------------
-with open("data/novels/monte_cristo.txt", encoding="utf-8") as f:
-    canon = f.read()
+    bdh = BDH(config)
+    bdh.load_state_dict(torch.load("models/bdh.pt", map_location="cpu"))
+    bdh.eval()
 
-canon = canon[:8000]
-canon_embed = get_embedder().encode(canon, normalize_embeddings=True)
+    # Load canon
+    with open("data/novels/monte_cristo.txt", encoding="utf-8") as f:
+        canon = f.read()
 
-# -----------------------------
-# Load tokenizer
-# -----------------------------
-kmeans = joblib.load("models/tokenizer.km")
+    canon = canon[:8000]
+    canon_embed = embedder.encode(canon, normalize_embeddings=True)
+
+    # Load tokenizer
+    kmeans = joblib.load("models/tokenizer.km")
+
+    print("✅ Models loaded")
 
 # -----------------------------
-# Run BDH safely
+# Safe BDH run
 # -----------------------------
 def run_bdh(text):
     tokens = encode(text, kmeans)
@@ -66,7 +68,7 @@ def run_bdh(text):
     if len(tokens) < 10:
         return torch.zeros(64)
 
-    idx = torch.tensor([tokens[:300]], dtype=torch.long)
+    idx = torch.tensor([tokens[:300]])
 
     with torch.no_grad():
         _, _, h = bdh(idx)
@@ -77,11 +79,13 @@ def run_bdh(text):
 # Feature extractor
 # -----------------------------
 def extract_features(book_name, backstory):
-    # ---- Semantic similarity ----
-    back_embed = get_embedder().encode(backstory, normalize_embeddings=True)
+    load_models()   # 👈 THIS is the magic line
+
+    # Semantic similarity
+    back_embed = embedder.encode(backstory, normalize_embeddings=True)
     semantic = float(np.dot(canon_embed, back_embed))
 
-    # ---- BDH belief drift ----
+    # BDH belief drift
     H_back = run_bdh(backstory)
     H_canon = run_bdh(canon)
 
@@ -89,4 +93,5 @@ def extract_features(book_name, backstory):
     drift_norm = min(drift / 250.0, 1.0)
 
     return semantic, drift_norm
+
 
