@@ -11,6 +11,7 @@ print("Loading models...")
 # Load semantic encoder
 # -----------------------------
 embedder = SentenceTransformer("all-MiniLM-L6-v2", device="cpu", cache_folder="./hf_cache")
+pip install -r requirements.txt && python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2', cache_folder='./hf_cache')" && python -m nltk.downloader punkt -d ./nltk_data
 # -----------------------------
 # Load BDH
 # -----------------------------
